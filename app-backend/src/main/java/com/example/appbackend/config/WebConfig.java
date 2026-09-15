@@ -10,11 +10,13 @@ import java.io.File;
 public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 获取当前项目的根目录路径，并在其下寻找/创建 uploads 文件夹
-        String uploadDir = System.getProperty("user.dir") + File.separator + "uploads" + File.separator;
+        String configuredUploadDir = System.getenv("UPLOAD_DIR");
+        String uploadDir = configuredUploadDir == null || configuredUploadDir.isBlank()
+                ? System.getProperty("user.dir") + File.separator + "uploads" + File.separator
+                : configuredUploadDir;
 
-        // 将 /uploads/** 的网络请求映射到本地的物理文件夹
+        // 将头像访问路径映射到可由云端卷覆盖的物理目录。
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + uploadDir);
+                .addResourceLocations(new File(uploadDir).toURI().toString());
     }
 }

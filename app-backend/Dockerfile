@@ -1,15 +1,15 @@
-# 第一阶段：构建阶段
+# 第一阶段：构建后端可执行文件
 FROM maven:3.9-eclipse-temurin-17 AS builder
 WORKDIR /build
-# 复制整个后端项目内容
-COPY . .
-# 在当前目录执行 Maven 打包（因为 pom.xml 就在这里）
-RUN mvn clean package -DskipTests
+COPY pom.xml ./pom.xml
+COPY src ./src
+RUN mvn --batch-mode --no-transfer-progress clean package -DskipTests
 
-# 第二阶段：运行阶段
+# 第二阶段：运行后端服务
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
-# 从构建阶段复制生成的 JAR 包
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=70.0 -XX:+UseSerialGC -Duser.timezone=Asia/Shanghai"
 COPY --from=builder /build/target/app-backend-0.0.1-SNAPSHOT.jar app.jar
+RUN mkdir -p /app/uploads
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
