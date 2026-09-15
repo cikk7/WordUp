@@ -17,6 +17,14 @@ public class HelloController {
         return "Hello Android! 郭组长的后端指挥中心已就绪，请求已收到！";
     }
 
+    /**
+     * 提供不依赖外部服务读写操作的部署健康检查接口。
+     */
+    @GetMapping("/health")
+    public String health() {
+        return "UP";
+    }
+
     // 新增的 Redis 测试接口
     @GetMapping("/testRedis")
     public String testRedis() {

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.File;
 import java.io.IOException;
@@ -101,20 +102,29 @@ public class LoginController {
         }
 
         try {
-            String uploadDir = System.getProperty("user.dir") + File.separator + "uploads" + File.separator;
+            String configuredUploadDir = System.getenv("UPLOAD_DIR");
+            String uploadDir = configuredUploadDir == null || configuredUploadDir.isBlank()
+                    ? System.getProperty("user.dir") + File.separator + "uploads" + File.separator
+                    : configuredUploadDir;
             File dir = new File(uploadDir);
             if (!dir.exists()) {
-                dir.mkdirs();
+                if (!dir.mkdirs()) {
+                    return Result.error(500, "服务器无法创建头像存储目录");
+                }
             }
 
             String originalFilename = file.getOriginalFilename();
-            String suffix = originalFilename != null ? originalFilename.substring(originalFilename.lastIndexOf(".")) : ".jpg";
+            int suffixIndex = originalFilename == null ? -1 : originalFilename.lastIndexOf(".");
+            String suffix = suffixIndex >= 0 ? originalFilename.substring(suffixIndex) : ".jpg";
             String newFilename = UUID.randomUUID().toString().replace("-", "") + suffix;
 
-            File dest = new File(uploadDir + newFilename);
+            File dest = new File(dir, newFilename);
             file.transferTo(dest);
 
-            String avatarUrl = "http://10.0.2.2:8080/uploads/" + newFilename;
+            String avatarUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path("/uploads/")
+                    .path(newFilename)
+                    .toUriString();
 
             UpdateWrapper<User> updateWrapper = new UpdateWrapper<>();
             updateWrapper.eq("username", username).set("avatar_url", avatarUrl);

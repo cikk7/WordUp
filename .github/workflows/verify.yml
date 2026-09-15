@@ -1,0 +1,56 @@
+name: Verify WordUp
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app-backend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+          cache-dependency-path: app-backend/pom.xml
+      - name: Package backend
+        run: mvn --batch-mode --no-transfer-progress clean package -DskipTests
+
+  android:
+    name: Android debug APK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app-frontend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+          cache-dependency-path: |
+            app-frontend/*.gradle.kts
+            app-frontend/gradle/libs.versions.toml
+            app-frontend/gradle/wrapper/gradle-wrapper.properties
+      - name: Build debug APK
+        run: bash ./gradlew :app:assembleDebug --stacktrace --no-daemon
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: wordup-debug-apk
+          path: app-frontend/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
