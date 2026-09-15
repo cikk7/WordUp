@@ -6,7 +6,7 @@ public class NetworkConfig {
      * 如果需要在本地模拟器测试，可以临时改为 "http://10.0.2.2:8080"
      * 但打包前务必改回 Railway 地址。
      */
-    public static final String BASE_URL = "https://wordup-production.up.railway.app";
+    public static final String BASE_URL = "https://wordup-production-a2b1.up.railway.app";
 
     // 拼接具体的接口路径
     public static final String UPDATE_PROFILE_URL = BASE_URL + "/updateProfile";
